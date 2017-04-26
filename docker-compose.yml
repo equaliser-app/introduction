@@ -1,0 +1,28 @@
+version: '2'
+services:
+    web:
+        build:
+          context: equaliser-web
+          dockerfile: Dockerfile
+        ports:
+          - 8081:80
+        depends_on:
+          - api
+        working_dir: /opt/equaliser-web
+        command: lib/wait-for-it.sh -t 0 api:80 -- bin/docker_entrypoint
+        container_name: equaliser-web
+    api:
+        build:
+          context: equaliser-api
+          dockerfile: Dockerfile
+        ports:
+          - 8080:80
+        depends_on:       
+          - database
+        working_dir: /opt/equaliser-api
+        command: ./wait-for-it.sh -t 0 database:3306 -- java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory -Dco.paralleluniverse.fibers.verifyInstrumentation -javaagent:/opt/equaliser-api/quasar-core-0.7.7-jdk8.jar -jar api-1.0.0-fat.jar -conf api.json
+        container_name: equaliser-api
+    database:
+        build:
+          context: database
+          dockerfile: Dockerfile
